@@ -1,0 +1,172 @@
+---
+title: "Pre Processing Data"
+author: "Sumithra Hari"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+
+```{r Global Setup, include=FALSE, echo=FALSE, message=FALSE, warning=FALSE}
+
+# Setting up some global options for the knitr.
+# General principle is that local options over-ride the global.
+# More knitr options are available here: https://yihui.name/knitr/options/
+
+knitr::opts_chunk$set(
+	#Chunk Code Options
+	echo = FALSE, # Show the code in the output
+	include = TRUE, # Show the results in the output.
+	results = 'asis', 
+	comment = NA, 
+	prompt = FALSE,
+	warning = FALSE,
+	message=FALSE,
+	
+	#Display Options
+	cache = FALSE,
+
+	# Plot Options
+	fig.width = 6,
+	fig.height = 6,
+	
+	fig.retina = 2,
+	fig.align = 'center'
+	
+)
+options(dplyr.summarise.inform = FALSE)
+options(digits = 4)
+```
+
+```{r Importing libraries, include=FALSE}
+if (!require("readxl")) install.packages("readxl")
+library(readxl)
+
+if (!require("tidyverse")) install.packages("tidyverse")
+library(tidyverse)
+
+if (!require("dplyr")) install.packages("dplyr")
+library(dplyr)
+
+if (!require("plotly")) install.packages("plotly")
+library(magrittr)
+
+if (!require("lubridate")) install.packages("lubridate")
+library(lubridate)
+
+if (!require("ggplot2")) install.packages("ggplot2")
+library(ggplot2)
+
+if (!require("gridExtra")) install.packages("gridExtra") 
+library("gridExtra")
+
+if (!require("grid"))install.packages("grid")
+library("grid")
+
+if (!require("flexdashboard")) install.packages("flexdashboard")
+library(flexdashboard)
+
+if (!require("DT")) install.packages("DT")
+library(DT)
+
+library(ggpubr)
+library(cowplot)
+```
+
+```{r Reading the file}
+getwd()
+#load("R Assignment.RData")
+path <- "C:/UNCG/IAF 605/Assignment/R Assignment/R Assignment.xlsx"
+
+#accessing all the sheets 
+sheet <- excel_sheets("R Assignment.xlsx")
+dataframe <-lapply(setNames(sheet, sheet), 
+                   function(x) read_excel("R Assignment.xlsx", sheet=x))
+
+
+```
+
+```{r}
+#names(dataframe)
+
+# Combining Industrial columns into one column calle dsector and the corresponding number of persons employed as Employees
+dataframe$US <-
+  dataframe$US %>%
+    gather(Sector, Employees, c("Construction", "Manufacturing",
+                                "Retail", "L and H"), factor_key=TRUE) 
+                          
+dataframe$FL <- 
+  dataframe$FL %>%
+    gather(Sector, Employees, c("Construction", "Manufacturing",
+                                "Retail", "L and H"), factor_key=TRUE)%>% 
+    gather(Status, Persons, c("Employed", "Unemployed"), factor_key=TRUE)
+
+dataframe$TX <- 
+  dataframe$TX %>%
+    gather(Sector, Employees, c("Construction", "Manufacturing", 
+                                "Retail", "L and H"), factor_key=TRUE)%>% 
+    gather( Status, Persons, c("Employed", "Unemployed"), factor_key=TRUE)
+
+dataframe$CA <-
+  dataframe$CA %>%
+    gather(Sector, Employees, c("Construction", "Manufacturing",
+                                "Retail", "L and H"), factor_key=TRUE)%>% 
+    gather(Status, Persons, c("Employed", "Unemployed"), factor_key=TRUE)
+
+# Combining 4 different age groups into a column called 'Agegroup' and the corresponding participation rate as A-activity
+# Men and Women columns combined into 'Gender' column and their corresponding values as 'G_Activity'
+# Men and Women age group columns combined into G_Agegroup and their corresponding values into GA_Activity
+
+dataframe$Lfpr <- 
+  dataframe$Lfpr %>%
+  gather(Agegroup, A_Activity, c("16to19", "20to24", "25to54", "55andOver"),
+          factor_key=TRUE) %>%
+  
+  gather(Gender, G_Activity, c("Women", "Men"), factor_key=TRUE)%>%
+  
+  gather(G_Agegroup, GA_Activity,c("M_15to24","W_15to24","M_25to54", "W_25to54", 
+                                     "M_55to64","W_55to64"),factor_key=TRUE) 
+    
+#Combining 4 diffrent races into 'Race' column and their values into 'R_Activity'
+dataframe$Race <- 
+  dataframe$Race %>%
+    gather(Race, R_Activity,c("White", "AfricanAmerican", "Hispanic","Asian"),
+            factor_key=TRUE) 
+
+```
+
+
+```{r Binding all dataframes together}
+#### combining all dataframes into a single dataframe
+original_data <- bind_rows(dataframe, .id="Sheet")
+original_data$Date <- as.Date(original_data$Date)
+```
+
+
+```{r Converting date into factors} 
+# Splitting date into different time periods and then converting it into factors
+# Extracting month and year from date
+original_data <- original_data%>%
+              mutate(Month= strftime(Date, "%B"), 
+                     Year = strftime(Date, "%Y"),
+                     Period = case_when(
+                       between(as.Date(Date), as.Date('2004-01-01'),
+                               as.Date("2007-11-01"))~"Pre-Recession",
+                       between(as.Date(Date), as.Date("2007-12-01"),
+                               as.Date("2009-07-01"))~ "Recession",
+                       between(as.Date(Date), as.Date("2009-08-01"),
+                               as.Date("2014-12-01"))~"Post Recession",
+                       between(as.Date(Date), as.Date("2015-01-01"),
+                               as.Date("2020-01-01"))~ "Pre-Pandemic",
+                       between(as.Date(Date), as.Date("2020-02-01"), 
+                               as.Date("2020-05-01"))~"Pandemic",
+                       between(as.Date(Date), as.Date("2020-06-01"),
+                               as.Date("2022-12-01"))~ "Post Pandemic" ))
+ original_data$Period <-original_data$Period %>% as.factor()
+ 
+```
+
+```{r}
+data <-original_data
+data
+```
+

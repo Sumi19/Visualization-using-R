@@ -1,0 +1,1008 @@
+---
+title: "Exploring The Two Great Phenomenon"
+author: "Sumithra Hariguruprasad"
+date: "`r Sys.Date()`"
+
+runtime: shiny
+
+output: 
+  flexdashboard::flex_dashboard:
+      vertical_layout: fill
+      
+      
+---
+
+```{r Libraries And Setup, include = FALSE, echo=FALSE}
+
+if (!require("tidyverse")) install.packages("tidyverse")
+library(tidyverse)
+
+
+if (!require("dplyr")) install.packages("dplyr")
+library(dplyr)
+
+if (!require("DT")) install.packages("DT")
+library(DT)
+
+if (!require("Hmisc")) install.packages("Hmisc")
+library(Hmisc)
+
+if (!require("lubridate")) install.packages("lubridate")
+library(lubridate)
+
+if (!require("plotly")) install.packages("plotly")
+library(plotly)
+
+if (!require("gridExtra")) install.packages("gridExtra")
+library(gridExtra)
+
+if (!require("maps")) install.packages("maps")
+library(maps)
+
+if (!require("shiny")) install.packages("shiny")
+library(shiny)
+
+if (!require("shinydashboard")) install.packages("shinydashboard")
+library(shinydashboard)
+
+if (!require("flexdashboard")) install.packages("flexdashboard")
+library(flexdashboard)
+
+if (!require("ggplot2")) install.packages("ggplot2")
+library(ggplot2)
+
+if (!require("grid"))install.packages("grid")
+library("grid") # to use textGrob in annotate.fig(bottom =textGrob(), gp=gpar())
+
+
+```
+
+```{r Global knitr Setup, include=FALSE, echo=FALSE, message=FALSE, warning=FALSE}
+
+knitr::opts_chunk$set(
+	#Chunk Code Options
+	echo = FALSE, 
+	include = TRUE, 
+	message = FALSE, 
+	warning = FALSE, 
+	
+	results = 'asis', 
+	comment = NA, 
+	prompt = FALSE, 	
+	
+	fig.retina = 2,
+	# default alignment of all figures.
+	fig.align = 'center'
+)
+
+# round all decimals to 4 digits (after the decimal),
+# unless specified otherwise in the local options. 
+options(digits = 4)
+
+```
+
+```{r Load data, include = FALSE, echo=FALSE}
+
+#getwd()
+
+load("R Assignment.RData")
+```
+
+```{r}
+RecessionData <- data %>% 
+	filter(
+			Region=='California' 
+			| Region=='Florida'
+			| Region=='Texas'
+			)
+
+#RecessionData <- RecessionData %>% rename_all(function(x) gsub(" ", "_", x))
+
+```
+
+# Unemployment Rate
+
+
+<H2> Impact on Unemployment Rate by State.</H2>
+
+## Column {.tabset}
+
+
+### California
+
+```{r}
+RecessionData %>% 
+	filter(Region =="California" & 
+	         Period %in% c("Pre-Recession", "Recession", "Post Recession")) %>%
+  ggplot(aes(x=as.Date(Date), y = UnempRate))+
+  geom_col(aes(fill=Period), alpha=0.6, position = "dodge")+
+  geom_path(size=2)+
+	geom_point(size=2, alpha=0.3)+
+	geom_smooth(color="red",alpha=0.3)+
+  scale_fill_brewer(palette="Paired")+
+  
+	labs(
+      title = "California Unemployment Rates (%)", 
+      subtitle = "",
+      x= "Year",
+      y = "Unemp Rate(%)")+
+	theme(
+		plot.title = 
+			element_text(margin = margin(t = 5, b = 5), size=14),
+		legend.position="bottom"
+		)
+```
+
+### Florida
+
+```{r}
+RecessionData %>% 
+	filter(Region =="Florida" & 
+	         Period %in% c("Pre-Recession", "Recession", "Post Recession")) %>%
+  ggplot(aes(x= as.Date(Date), y = UnempRate))+
+  geom_col(aes(fill=Period), alpha=0.6, position = "dodge")+
+  #geom_path(size=2)+
+	geom_point(size=2, alpha=0.3)+
+	geom_smooth(color="brown",alpha=0.3)+
+  scale_fill_brewer(palette="Accent")+
+	labs(
+      title = "Florida Unemployment Rates (%)", 
+      subtitle = "",
+      x= "Year",
+      y = "Unemp Rate(%)")+
+	theme(
+		plot.title = 
+			element_text(margin = margin(t = 5, b = 5), size=14),
+		legend.position="bottom"
+		)
+
+
+```
+
+### Texas
+
+```{r}
+RecessionData %>% 
+	filter(Region =="Texas" & 
+	         Period %in% c("Pre-Recession", "Recession", "Post Recession")) %>%
+  ggplot(aes(x= as.Date(Date), y = UnempRate))+
+  geom_col(aes(fill=Period), alpha=0.4, position = "dodge")+
+  #geom_path(size=2)+
+	geom_point(size=2, alpha=0.3)+
+	geom_smooth(color="red",alpha=0.4)+
+  scale_fill_brewer(palette="Dark2")+
+	labs(
+      title = "Texas Unemployment Rates (%)", 
+      subtitle = "",
+      x= "Year",
+      y = "Unemp Rate(%)")+
+	theme(
+		plot.title = 
+			element_text(margin = margin(t = 5, b = 5), size=14),
+		legend.position="bottom"
+		)
+```
+
+### Comparing minimum rates between the states
+
+```{r}
+
+a<-RecessionData %>% 
+	group_by(Region,Year) %>% 
+  mutate(rate=min(UnempRate))%>%
+	ggplot(aes(x=year(Date), y = rate, (color='Region')))+
+	geom_point()+
+	geom_smooth	(aes(color=Region), alpha=0.4)+
+	scale_fill_brewer(palette="Set1")+ 
+	labs( 
+	    title = "Minimum Unemployment by Region",
+	    subtitle = "",
+	    fill="Region",
+	    x= "Year",
+	    y = "Unemployment Rate")+
+	theme(legend.position="")
+a
+
+
+```
+
+## Column {.tabset}
+
+### California
+
+```{r}
+RecessionData %>% 
+	filter(Region =="California" & 
+	         Period %in% c("Pre-Pandemic", "Pandemic", "Post Pandemic")) %>%
+  ggplot(aes(x=as.Date(Date), y = UnempRate))+
+  geom_col(aes(fill=Period), alpha=0.6, position = "dodge")+
+  geom_path(size=2)+
+	geom_point(size=2, alpha=0.3)+
+	geom_smooth(color="red",alpha=0.3)+
+  scale_fill_brewer(palette="Paired")+
+	labs(
+      title = "California Unemployment Rates (%)", 
+      subtitle = "",
+      x= "Year",
+      y = "Unemp Rate(%)")+
+	theme(
+		plot.title = 
+			element_text(margin = margin(t = 5, b = 5), size=14),
+		legend.position="bottom"
+		)
+```
+
+### Florida
+
+```{r}
+RecessionData %>% 
+	filter(Region =="Florida" & 
+	         Period %in% c("Pre-Pandemic", "Pandemic", "Post Pandemic")) %>%
+  ggplot(aes(x= as.Date(Date), y = UnempRate))+
+  geom_col(aes(fill=Period), alpha=0.6, position = "dodge")+
+  geom_path(size=2)+
+	geom_point(size=2, alpha=0.3)+
+	geom_smooth(color="brown",alpha=0.3)+
+  scale_fill_brewer(palette="Accent")+
+	labs(
+      title = "Florida Unemployment Rates (%)", 
+      subtitle = "",
+      x= "Year",
+      y = "Unemp Rate(%)")+
+	theme(
+		plot.title = 
+			element_text(margin = margin(t = 5, b = 5), size=14),
+		legend.position="bottom"
+		)
+
+
+```
+
+### Texas
+
+```{r}
+RecessionData %>% 
+	filter(Region =="Texas" & 
+	         Period %in% c("Pre-Pandemic", "Pandemic", "Post Pandemic")) %>%
+  ggplot(aes(x= as.Date(Date), y = UnempRate))+
+  geom_col(aes(fill=Period), alpha=0.4, position = "dodge")+
+  geom_path(size=2)+
+	geom_point(size=2, alpha=0.3)+
+	geom_smooth(color="red",alpha=0.4)+
+  scale_fill_brewer(palette="Dark2")+
+	labs(
+      title = "Texas Unemployment Rates (%)", 
+      subtitle = "",
+      x= "Year",
+      y = "Unemp Rate(%)")+
+	theme(
+		plot.title = 
+			element_text(margin = margin(t = 5, b = 5), size=14),
+		legend.position="bottom"
+		)
+```
+
+### Comparing Maximum rates between the states
+
+```{r}
+
+a<-RecessionData %>% 
+	group_by(Region,Year) %>% 
+  mutate(rate1=max(UnempRate))%>%
+	ggplot(aes(x=year(Date), y = rate1, (color='Region')))+
+  geom_point() +
+	geom_smooth	(aes(color=Region), alpha=0.4)+
+	scale_fill_brewer(palette="Set1")+ 
+	labs( 
+	    title = " Maximum Unemployment by Region",
+	    subtitle = "",
+	    fill="Region",
+	    x= "Year",
+	    y = "Unemployment Rate")+
+	theme(legend.position="")
+a
+
+
+```
+
+# Unemployment Rate (Interactive)
+
+
+<H3> Please choose period and states to see the unemployment rate for a particular state for all the years or for a particular period of time </H3>
+
+## Column {data-width="200"}
+
+### Select States and Period
+
+```{r SelectState}
+
+selectInput(
+	inputId = "StateSelected",
+	label = "Please select the state",
+	choices = 
+		RecessionData %>% 
+		select(Region) %>% 
+		unique()
+)
+
+```
+
+```{r SelectPeriod}
+
+selectInput(
+	inputId = "PeriodSelected",
+	label = "Please select the Period",
+	choices = 
+		RecessionData %>% 
+		select(Period) %>% 
+		unique()
+)
+
+```
+
+##  Column 
+
+### Plotting Unemployment Rate for Selected State and Period
+
+```{r}
+renderPlot({
+RecessionData %>%
+	filter(Region ==input$StateSelected) %>%
+	filter(Period == input$PeriodSelected) %>% 
+	ggplot(aes(x=Date, y = `UnempRate`))+
+	geom_col(aes(fill=`Period`) , alpha=0.6, position = "dodge")+
+	geom_path(size=2)+
+	geom_point(size=1)+
+	geom_smooth(alpha=0.3, size=2)+
+		scale_fill_brewer(palette="Paired")+
+	labs(
+      title = input$StateSelected,
+      subtitle = "Unemployment Rates (%)",
+      x= "Year",
+      y = "Rate(%)")+
+	theme(
+		plot.title =
+			element_text(margin = margin(t = 10, b = 10), size=18),
+		legend.position = 'top'
+		)
+})
+```
+
+### Table
+
+```{r}
+
+renderDT(
+	RecessionData %>% 
+	select(Period, Region, Date,
+		   'Rate(%)' = `UnempRate`) %>% 
+	filter(Region ==input$StateSelected) %>% 
+	filter(Period ==input$PeriodSelected)
+	
+)
+
+```
+
+## Column
+
+### All Years for Selected States
+
+```{r}
+
+renderPlot({
+
+	RecessionData %>%
+	filter(Region ==input$StateSelected) %>%
+  
+	ggplot(aes(x=Date, y = `UnempRate`))+
+	geom_col(aes(fill=`Period`) , alpha=0.6, position = "dodge")+
+	geom_path(size=1)+
+	geom_point(size=2)+
+	geom_smooth(alpha=0.3, size=2)+
+	#geom_line(
+	#	aes( group = `Period`)
+		#arrow=arrow(ends = "both", type = "closed"))+
+	scale_fill_brewer(palette="Paired")+
+	labs(
+      title = input$StateSelected,
+      subtitle = "Unemployment Rates (%)",
+      x= "Year",
+      y = "Unemployment Rate(%)")+
+	theme(
+		plot.title =
+			element_text(margin = margin(t = 10, b = 10), size=18),
+		legend.position = 'top'
+		)
+
+})
+
+```
+
+### All Years All States
+
+```{r}
+
+
+renderPlot({
+  RecessionData %>%
+	ggplot(aes(x=Date, y = `UnempRate`))+
+	geom_point(size=1)+
+	geom_smooth(aes(color=`Region`), alpha=0.3, size=2)+
+	scale_fill_brewer(palette="Paired")+
+	labs(
+      title = "Unemploymnet Rates",
+      subtitle = "Unemployment Rates (%)",
+      x= "Year",
+      y = "Unemployment Rate(%)")+
+	theme(
+		plot.title =
+			element_text(margin = margin(t = 10, b = 10), size=18),
+		legend.position = 'top'
+		)
+
+})
+
+```
+
+# Labour Force
+
+## column {.tabset}
+
+### Table
+```{r}
+Lfpr <- 
+  data %>% 
+      filter(Period %in% c("Pandemic", "Recession") ) %>%
+     	group_by(Region,Year, Period) %>%
+      summarise(AvgPRate = mean(`Labour Force`))%>%    
+      drop_na() %>%
+      datatable( 
+	    colnames = c("Region","Year","Period", "AvgPRate"),
+    	caption = htmltools::tags$caption(
+    	  style = 'caption-side: top; 
+    	  text-align: center;',
+    	  htmltools::h2(' AveargeParticipation Rate By Region')),
+	      options = list(pageLength = 6, scrollX=T))  %>%
+      formatRound('AvgPRate',digits = 2)
+
+Lfpr
+```
+
+### Density Plot 
+```{r}
+theme03 <- theme(
+    	  plot.title = element_text(hjust = 0.5, size=12, face="bold"),
+    	  #axis.text.x = element_text(face="bold"),
+    	  axis.text.x= element_blank(),
+    	  axis.title.x=element_blank(),
+    	  axis.title.y=element_text(face="bold"),
+    	  
+    	  axis.ticks = element_blank(),
+    	  panel.background = element_rect(fill = '#F6E4D1', color = 'purple'),
+    	  panel.grid.major = element_blank(),
+    	  panel.grid.minor = element_blank(),
+    	  strip.background = element_blank(),
+    	  strip.text = element_text(face = "bold", size=9))
+PR <-
+  data %>% 
+  filter(Region=="United States")%>%
+	group_by(Period,Year, Month) %>% 
+    ggplot(aes(`Labour Force`, fill=Period))+
+  geom_histogram() +
+    geom_density()+
+	  scale_fill_brewer(palette="Set1")+
+	  scale_y_continuous()+
+	  labs( 
+	      title = "Participation Rate ",
+	      fill = "Time Period",
+	      x="activity rate",
+	      y = "density")+
+  	 
+  	  theme03
+PR
+  
+```
+
+
+### Average Participation rate
+
+```{r}
+
+PRate_avg <-
+  data %>% 
+      group_by(Region,Year, Period) %>%
+      summarise(AvgPRate = round(mean(`Labour Force`)))%>%    
+      drop_na() %>%
+  
+      ggplot(aes(Period,AvgPRate))+
+      geom_col(aes(fill=`Period`) ,  width = 0.8,alpha=0.6, position='dodge')+
+    	#geom_smooth(alpha=0.3)+
+      geom_text(stat='identity', aes(label = AvgPRate+8), vjust = -5, hjust=1.0)+
+	    scale_y_continuous(limits=c(0,80))+
+	    labs( 
+	      title = "Average Participation Rate ",
+	      fill = "Time Period",
+	      x="Period",
+	      y = "Rate in Percent")+
+  	  facet_grid(vars(Region))+
+  	  theme03
+
+ggplotly(PRate_avg)
+
+```
+
+
+
+### Points to note:
+
+1. The average participation rate during recession is close to 66%.
+
+2.The participation rate during the pandemic is 5% lower in California and in Florida and 4% lower in Texas and  in the US during the recession. 
+
+3. Overall, all three states' average are either equal or one percent lower than the national average.
+
+$. Participation rate among men is higher than women and in particular men of age 25 to 54 years' activity rate is higher than all other age groups and it is lower among women of age 15 to 24 years.
+
+5. Hispanic participation rate is higher during pandemic and it is seen lower among Caucasian. Whereas Asians were most affected by recession in 2007 than during 2020
+
+
+
+
+### Gender
+```{r , Gender, message=FALSE, warning=FALSE, fig.width=8, fig.width=6, fig.align='center'}
+theme04 <-  theme(
+  	    
+    	  plot.title = element_text(hjust = 0.5, size=12, face="bold"),
+    	  axis.text.x = element_text(face="bold"),
+    	  axis.text.y = element_text(face="bold"),
+    	  axis.title.x = element_text(face="bold"),
+    	  axis.title.y = element_text(face="bold"),
+    	  panel.background = element_rect(fill = '#F6CAC0', color = 'purple'),
+    	  #panel.background = element_blank(),
+    	  panel.grid.major = element_blank(),
+    	  panel.grid.minor = element_blank()
+	)
+
+PRate_gender <- 
+  data %>%
+    select("Gender","G_Activity",
+           "Period","Year") %>%
+    drop_na() %>%
+    ggplot(aes(Gender,G_Activity, fill=Period))+
+    geom_col(position = "dodge",  alpha=0.3, width=0.8)+
+    scale_y_continuous(limits = c(0,90))+
+    labs( 
+	      title = " Participation Rate By Gender",
+	      fill = "Time Period",
+	      y = "Rate in Percent")+
+  	    theme04
+  	 
+ggplotly(PRate_gender)
+
+```
+
+### By Age
+```{r, message=FALSE, warning=FALSE, fig.width=8, fig.width=6, fig.align='center'}
+
+PRate_age <-
+  data %>%
+    select("Agegroup","A_Activity",
+           "Period","Year") %>%
+  drop_na() %>%
+    ggplot(aes(Agegroup,A_Activity, fill=Period))+
+    #geom_col(position = "dodge",  alpha=0.9, width=0.6)+
+    geom_col(position = "dodge",  alpha=0.4, width=0.95)+
+    geom_smooth(color="brown",alpha=0.6)+
+    scale_y_continuous(limits = c(0,90), n.breaks = 6)+
+    labs( 
+	      title = " Participation Rate By Agegroup",
+	      fill = "Time Period",
+	      x="Agegroup",
+	      y = "Rate in Percent")+
+  facet_grid(cols = vars(Agegroup), scales = "free_x", space = "free_x")+
+  	  theme04 + theme(axis.text.x=element_blank(),
+  	                  axis.title.x=element_blank())
+ggplotly(PRate_age)
+```
+## row
+### By Agegroup and Gender
+```{r , Agegroup and gender, message=FALSE, warning=FALSE, fig.width=8, fig.width=6, fig.align='center'}
+PRate_aggen <- data %>%
+  
+    select("G_Agegroup","GA_Activity", "Period","Year") %>%
+    drop_na() %>%
+    ggplot(aes(G_Agegroup,GA_Activity, fill=Period))+
+    geom_col(position = "dodge",  alpha=0.4, width=0.95)+
+    geom_smooth(color="brown",alpha=0.6)+
+    scale_y_continuous(limits = c(0,100))+
+    scale_fill_brewer(palette="Accent")+
+    labs( 
+	      title = " Participation Rate By Gender and Agegroup",
+	      fill = "Agegroup",
+	      x="Gender_Agegroup",
+	      y = "Rate in percent")+
+  	  facet_grid(cols = vars(G_Agegroup), scales = "free_x", space = "free_x")+
+  	  theme04 + theme(axis.text.x=element_blank(),
+  	                  panel.background = element_rect(fill = '#F6E4D1', color = 'purple'))
+ggplotly(PRate_aggen)
+
+```
+
+### Race
+```{r, race, fig.width=8, fig.height=6}
+
+PRate_race <- data %>%
+  
+    select("Race","R_Activity", "Period","Year") %>%
+    
+    drop_na()%>%
+    ggplot(aes(Race,R_Activity, fill=Period))+
+    geom_col(position = "dodge",  alpha=0.4, width=0.8)+
+    
+    scale_y_continuous(limits = c(0,100))+
+    labs( 
+	      title = " Participation Rate By Race",
+	      fill = "Period",
+	      x="Race",
+	      y = "Rate in Percent")+
+  	  facet_grid(cols = vars(Race), scales = "free_x", space = "free_x")+
+  	  theme04 + theme(axis.text.x=element_blank(),
+  	                  panel.background = element_rect(fill = '#F6E4D1', color = 'purple'),
+  	                  axis.title.x=element_blank())
+	
+ggplotly(PRate_race)
+```
+
+# Sectors
+
+
+
+<h3>Number of Persons Employed in Various Sectors</h2>
+
+## Column {.tabset}
+
+### Construction
+
+```{r , construction,  message=FALSE, warning=FALSE, fig.height=8, fig.width=6, fig.align='center'}
+
+theme06 <- theme(
+                plot.margin = unit(c(0,5,1,1),units="points"),
+                legend.box.spacing = unit(0.1, "cm"),
+                legend.title = element_text(size = 11), #change legend title font size
+                legend.text = element_text(size = 9), #change legend text font size
+                  plot.title = element_text(hjust = 0.5, size=13, face="bold", colour = "black"),
+                 axis.title.x=element_blank(),
+                 axis.text.x=element_blank(),
+                 axis.ticks.x=element_blank(),
+                 strip.text.x = element_text(size = 11, face="bold"),
+                 panel.background = element_rect(fill="white", color = 'brown'))
+    
+
+conemp<- data %>%
+           filter( Sector=="Construction"&
+                   Region !="United States") %>%
+           group_by(Region,Year,Period) %>% 
+           summarise(
+    AvgEmp = mean(Employees*1000),
+    n = n()
+    )%>%
+  drop_na()%>%
+  ggplot(aes(Period, AvgEmp, fill=Period))+
+  geom_col( aes(size=0.4), position = "dodge", alpha=0.6)+
+  #geom_smooth()+
+	
+  scale_fill_manual(name='Period', values=c("#006600","#006699","#66CCCC" ,
+                                            "#FF6633", "#55DC33" , "brown"))+
+	labs( x="Period", y = "Average Employed") +
+  scale_y_continuous(labels = scales::comma_format())+
+  coord_cartesian(ylim=c(0,1000000))+
+  labs(#title = " Construction",
+       x=expression(" "), y= "No.of Persons")+
+  facet_grid(~Region, scales = "free")+
+  theme06+
+  theme(strip.background=element_rect(colour="black", fill="#ccffcc"))+
+  guides(colour = guide_legend(nrow = 2, byrow = T, override.aes=list(size=2),
+                                       direction = "horizontal",
+                                       title.position = "top",
+                                       label.theme = element_text(angle = 0)))
+  
+ggplotly(conemp)
+```
+
+### Manufacturing
+
+
+```{r , Employed in Manufacturing, message=FALSE, warning=FALSE, fig.height=8, fig.width=6, fig.align='center'}
+manemp<- original_data %>%
+           filter( Sector=="Manufacturing", 
+                   Region !="United States") %>%
+           group_by(Region,Year,Period) %>% 
+           summarise(
+    AvgEmp = mean(Employees*1000),
+    n = n()
+    )%>% 
+  drop_na()%>%
+  ggplot(aes(Period, AvgEmp, fill=Period))+
+  geom_col( aes(bin=0.4),position = "dodge",  alpha=0.6)+
+  #geom_smooth()+
+	scale_fill_manual(name='Period', values=c("#006600","#006699","#66CCCC", 
+	                                          "#FF6633", "#55DC33" , "brown"))+
+  #scale_fill_brewer(palette="Set1")+ #Color it with the brewer fill pallette scale.
+	labs( x="Period", y = "Average Employed") +
+  scale_y_continuous(labels = scales::comma_format())+
+  coord_cartesian(ylim=c(0,1500000))+
+  labs(#title = " Manufacturing",
+       x=expression(" "),
+         y= "No.of Persons")+
+  facet_grid(~Region, scales = "free")+
+  theme06 +
+  theme(strip.background=element_rect(colour="black", fill="#FF9966"))
+
+manemp
+
+```
+
+## Column {.tabset}
+
+### Retail
+
+
+```{r , Employed in retail,message=FALSE, warning=FALSE, fig.width=8, fig.width=6, fig.align='center'}
+retailemp<- original_data %>%
+           filter( Sector=="Retail", 
+                   Region !="United States") %>%
+           group_by(Region,Year,Period) %>% 
+           summarise(
+    AvgEmp = mean(Employees*1000),
+    n = n()
+    )%>% 
+  drop_na()%>%
+  ggplot(aes(Period, AvgEmp, fill=Period))+
+  geom_col( aes(bin=0.4),position = "dodge",  alpha=0.6)+
+  #geom_smooth()+
+	scale_fill_manual(name='Period', values=c("#006600","#006699","#66CCCC" , 
+	                  "#FF6633", "#55DC33" , "brown"))+
+  #scale_fill_brewer(palette="Set1")+ #Color it with the brewer fill pallette scale.
+	labs( x="Period", y = "Average Employed") +
+  scale_y_continuous(labels = scales::comma_format())+
+  coord_cartesian(ylim=c(0,1700000))+
+  facet_grid(~Region, scales = "free")+
+  labs(#title = " Retail", 
+       x=expression(" "), y= "No.of Persons")+
+  theme06 +
+  theme(strip.background=element_rect(colour="black",fill="#66CCCC"))
+  
+retailemp
+```
+
+### Leisure & hospitality
+
+```{r , Employed in Leisure and Hospitality, message=FALSE, warning=FALSE, fig.height=8, fig.width=6, fig.align='center'}
+
+lhemp<- original_data %>%
+           filter( Sector=="L and H", 
+                   Region !="United States") %>%
+           group_by(Region,Year,Period) %>% 
+           summarise(
+    AvgEmp = mean(Employees*1000),
+    n = n()
+    #TotalEmp = sum(Employed)
+  )%>% 
+  drop_na()%>%
+  ggplot(aes(Period, AvgEmp, fill=Period))+
+  geom_col( aes(bin=0.4),position = "dodge",  alpha=0.6)+
+  #geom_smooth()+
+	scale_fill_manual(name='Period', values=c("#006600","#006699","#66CCCC" , "#FF6633",
+	                                           "#55DC33" , "brown"))+
+  #scale_fill_brewer(palette="Set1")+ #Color it with the brewer fill pallette scale.
+	labs( x="Period", y = "Average Employed") +
+  scale_y_continuous(labels = scales::comma_format())+
+  coord_cartesian(ylim=c(0,2000000))+
+  labs(#title = " Leisure and Hospitality",
+       x=expression(" "),
+        y= "No.of Persons")+
+  facet_grid(~Region, scales = "free")+
+  theme06+
+  theme(strip.background=element_rect(colour="black",fill="#BB6666"))
+
+lhemp
+```
+
+
+# Employment Status
+
+<H3>Number of Persons by States</H3>
+
+## row {.tabset}
+
+### Employed
+
+```{r , Employed by State, include=TRUE, message=FALSE, fig.width=6, fig.height=4}
+
+theme05 <- theme(
+                plot.margin = unit(c(0,5,1,1),units="points"),
+                legend.position="bottom",
+                legend.box.spacing = unit(0.1, "cm"),
+                legend.title = element_text(color = "blue", size = 9),
+                legend.text = element_text(color = "red"),
+                plot.title = element_text(face = "bold", hjust = 0.5),
+                axis.text.x=element_blank(),
+                #legend.title=element_blank(),
+                axis.ticks.x=element_blank(),
+                panel.grid.major = element_blank(),
+                strip.background=element_rect(colour="black",
+                                    fill="#F6E4D1"),     #,"#fed776","#8ed2cd","c2ed98)
+                strip.text.x = element_text(size = 11, face="bold"),
+                panel.background = element_rect( color = 'brown'))
+                #panel.background = element_blank())+
+                 
+emp1 <-
+      data %>%
+        select("Region","Year", "Period","Sector",
+                         "Status","Persons") %>%
+        filter(Status=="Employed"  &
+                 Region !="United States")%>%
+        group_by(Period, Region) %>% 
+        summarise(AvgEmp = mean(Persons))%>% 
+        drop_na() %>%
+        ggplot(aes(Period, AvgEmp, fill=Period))+
+          geom_col(width=0.5,position = "dodge",  alpha=0.5)+
+          geom_smooth()+
+          scale_fill_manual(name='Period', values=c("darkgreen","red","orangered", 
+                                                    "orange", "purple","hotpink"))+
+          scale_y_continuous(limits = c(0,18000000), labels = scales::comma_format())+
+          #scale_y_continuous(labels = scales::comma_format())+
+          labs(title = "Employed",
+               x=expression(" "),
+               y="No. of Persons")+
+          facet_wrap(~Region)+
+          theme05+
+  guides(colour = guide_legend(nrow = 1, byrow = T, override.aes=list(size=2),
+                                       direction = "horizontal",
+                                       title.position = "top",
+                                       label.theme = element_text(angle = 0)))
+  
+ggplotly(emp1)
+
+```
+
+### Unemployed
+
+```{r , Unemployed by state, message=FALSE, warning=FALSE, fig.width=6, fig.width=4, fig.align='center'}
+unemp1 <-
+      data %>%
+        select("Region","Year", "Period","Sector",
+                         "Status","Persons") %>%
+        filter(Status=="Unemployed" & 
+                 Region!= "United Status")%>%
+        group_by(Period, Region) %>% 
+        summarise(AvgEmp = mean(Persons))%>% 
+        drop_na()%>%
+        ggplot(aes(Period, AvgEmp, fill=Period))+
+            geom_col( width=0.5,position = "dodge",  alpha=0.5)+
+            geom_smooth()+
+            scale_fill_manual(name='Period', values=c("darkgreen","red","orangered",
+                                                      "orange","purple","hotpink"))+
+          scale_y_continuous(labels = scales::comma_format())+
+          labs(title = "Unemployed",
+               x=expression(" "),
+               y="No. of Persons")+
+          facet_wrap(~Region)+
+          theme05+
+          guides(colour = guide_legend(nrow = 1, byrow = T, override.aes=list(size=2),
+                                       direction = "horizontal",
+                                       title.position = "top",
+                                       label.theme = element_text(angle = 0)))  
+unemp1  
+```
+
+
+# Maps {data-orientation="rows"}
+
+## Row {data-height="100"}
+<h3> Unemployment rate by Region </H3>
+
+## Row {data-height="600"}
+
+### Pre-Recession
+
+```{r maps Pre}
+
+us_map <- map_data('state')
+
+Unempdata <- RecessionData %>%
+	filter(Period == "Pre-Recession" & Region !="United States") %>% 
+	group_by(Region) %>% 
+	summarise(
+		MeanUnempRate = mean(`UnempRate`)
+	)
+
+#Convert to lower case.
+Unempdata$region <- gsub('_',' ',tolower(Unempdata$Region))
+
+merged_data <- left_join(us_map, Unempdata[, c('region', 'MeanUnempRate')], by='region')
+
+ 
+merged_data %>% 
+	ggplot()+
+	geom_polygon(aes(x=long, y=lat, group=group, fill=MeanUnempRate))+
+	theme_void()+
+   labs(title = 'Mean Unemployment Rate', 
+        subtitle = 'Pre-Recession')
+```
+
+### Recession
+
+```{r maps Recession}
+
+# Recession Time Plot
+#---------------------------------
+us_map <- map_data('state')
+
+Unempdata <- RecessionData %>%
+	filter(Period == "Recession" & Region !="United States") %>% 
+	group_by(Region) %>% 
+	summarise(
+		MeanUnempRate = mean(`UnempRate`)
+	)
+
+#Convert to lower case.
+Unempdata$region <- gsub('_',' ',tolower(Unempdata$Region))
+
+merged_data <- left_join(us_map, Unempdata[, c('region', 'MeanUnempRate')], by='region')
+
+ 
+merged_data %>% 
+	ggplot()+
+	geom_polygon(aes(x=long, y=lat, group=group, fill=MeanUnempRate))+
+	theme_void()+
+   labs(title = 'Mean Unemployment Rate', 
+        subtitle = 'Recession')
+```
+
+
+### Post-Recession
+
+```{r maps Post}
+
+# Post-Recession Time Plot
+#---------------------------------
+us_map <- map_data('state')
+
+Unempdata <- RecessionData %>%
+	filter(Period == "Post Recession" & Region !="United States") %>% 
+	group_by(Region) %>% 
+	summarise(
+		MeanUnempRate = mean(`UnempRate`)
+	)
+
+#Convert to lower case.
+Unempdata$region <- gsub('_',' ',tolower(Unempdata$Region))
+
+merged_data <- left_join(us_map, Unempdata[, c('region', 'MeanUnempRate')], by='region')
+
+ 
+merged_data %>% 
+	ggplot()+
+	geom_polygon(aes(x=long, y=lat, group=group, fill=MeanUnempRate))+
+	theme_void()+
+   labs(title = 'Mean Unemployment Rate', 
+        subtitle = 'Post Recession')
+```
+
+
+## row
+
+### Table
+
+```{r}
+
+renderDT(
+	RecessionData %>% 
+	select(Period, Region, Date,
+		   'UnempRate(%)' = `UnempRate`)
+
+)
+
+```
+
